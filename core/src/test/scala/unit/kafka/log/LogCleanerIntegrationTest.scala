@@ -330,6 +330,7 @@ class LogCleanerIntegrationTest(compressionCodec: String) {
     }
   
     new LogCleaner(CleanerConfig(numThreads = numThreads, ioBufferSize = maxMessageSize / 2, maxMessageSize = maxMessageSize, backOffMs = logCleanerBackOffMillis),
+    // new LogCleaner(CleanerConfig(numThreads = numThreads, ioBufferSize = 33554432, maxMessageSize = maxMessageSize, backOffMs = logCleanerBackOffMillis),
                    logDirs = Array(logDir),
                    logs = logs,
                    time = time)

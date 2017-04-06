@@ -321,7 +321,7 @@ private[log] class Cleaner(val id: Int,
   private var readBuffer = ByteBuffer.allocate(ioBufferSize)
   
   /* buffer used for write i/o */
-  private var writeBuffer = ByteBuffer.allocate(ioBufferSize)
+  private var writeBuffer = ByteBuffer.allocate(ioBufferSize * 2)
 
   require(offsetMap.slots * dupBufferLoadFactor > 1, "offset map is too small to fit in even a single message, so log cleaning will never make progress. You can increase log.cleaner.dedupe.buffer.size or decrease log.cleaner.threads")
 
@@ -521,12 +521,13 @@ private[log] class Cleaner(val id: Int,
    */
   def growBuffers(maxLogMessageSize: Int) {
     val maxBufferSize = math.max(maxLogMessageSize, maxIoBufferSize)
-    if(readBuffer.capacity >= maxBufferSize || writeBuffer.capacity >= maxBufferSize)
+    if(readBuffer.capacity >= maxBufferSize || writeBuffer.capacity >= maxBufferSize * 2)
       throw new IllegalStateException("This log contains a message larger than maximum allowable size of %s.".format(maxBufferSize))
     val newSize = math.min(this.readBuffer.capacity * 2, maxBufferSize)
     info("Growing cleaner I/O buffers from " + readBuffer.capacity + "bytes to " + newSize + " bytes.")
     this.readBuffer = ByteBuffer.allocate(newSize)
-    this.writeBuffer = ByteBuffer.allocate(newSize)
+    info("Growing cleaner I/O write buffers from " + writeBuffer.capacity + "bytes to " + (newSize * 2) + " bytes.")
+    this.writeBuffer = ByteBuffer.allocate(newSize * 2)
   }
   
   /**
@@ -535,8 +536,8 @@ private[log] class Cleaner(val id: Int,
   def restoreBuffers() {
     if(this.readBuffer.capacity > this.ioBufferSize)
       this.readBuffer = ByteBuffer.allocate(this.ioBufferSize)
-    if(this.writeBuffer.capacity > this.ioBufferSize)
-      this.writeBuffer = ByteBuffer.allocate(this.ioBufferSize)
+    if(this.writeBuffer.capacity > this.ioBufferSize * 2)
+      this.writeBuffer = ByteBuffer.allocate(this.ioBufferSize *2)
   }
 
   /**
